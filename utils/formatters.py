@@ -18,6 +18,17 @@ def format_price(price: float, decimals: int = 2) -> str:
     Returns:
         Formatted price string
     """
+    # Convert to float if it's a string
+    if isinstance(price, str):
+        try:
+            price = float(price)
+        except (ValueError, TypeError):
+            return "0.00"
+    
+    # Handle None or invalid values
+    if price is None:
+        return "0.00"
+    
     return f"{price:,.{decimals}f}"
 
 def format_percentage(percentage: float, decimals: int = 2) -> str:
@@ -31,6 +42,17 @@ def format_percentage(percentage: float, decimals: int = 2) -> str:
     Returns:
         Formatted percentage string
     """
+    # Convert to float if it's a string
+    if isinstance(percentage, str):
+        try:
+            percentage = float(percentage)
+        except (ValueError, TypeError):
+            return "0.00%"
+    
+    # Handle None or invalid values
+    if percentage is None:
+        return "0.00%"
+    
     return f"{percentage:.{decimals}f}%"
 
 def format_pnl(pnl: float) -> str:
@@ -43,6 +65,17 @@ def format_pnl(pnl: float) -> str:
     Returns:
         Formatted PnL string with emoji
     """
+    # Convert to float if it's a string
+    if isinstance(pnl, str):
+        try:
+            pnl = float(pnl)
+        except (ValueError, TypeError):
+            return "0.00"
+    
+    # Handle None
+    if pnl is None:
+        return "0.00"
+    
     if pnl > 0:
         return f"✅ +{format_price(pnl)}"
     elif pnl < 0:
