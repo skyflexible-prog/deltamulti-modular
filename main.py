@@ -335,6 +335,12 @@ async def handle_text_input(update: Update, context):
     ]:
         await handle_target_input(update, context)
 
+    elif state in [STATE_AWAITING_MULTI_SL_TRIGGER, STATE_AWAITING_MULTI_SL_LIMIT]:
+        await handle_multi_stoploss_input(update, context)
+
+    elif state in [STATE_AWAITING_MULTI_TARGET_TRIGGER, STATE_AWAITING_MULTI_TARGET_LIMIT]:
+        await handle_multi_target_input(update, context)
+
 async def main():
     """Main application entry point."""
     global bot_application
