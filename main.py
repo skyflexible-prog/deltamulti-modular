@@ -183,6 +183,12 @@ def register_handlers(application: Application):
         handle_lot_selection,
         pattern=f"^{CALLBACK_SELECT_LOT}:"
     ))
+    # Add after handle_lot_selection handler
+    application.add_handler(CallbackQueryHandler(
+        handle_custom_lot_callback,
+        pattern=f"^{CALLBACK_CUSTOM_LOT}$"
+    ))
+
     application.add_handler(CallbackQueryHandler(
         handle_trade_direction,
         pattern=f"^{CALLBACK_TRADE_DIRECTION}:"
