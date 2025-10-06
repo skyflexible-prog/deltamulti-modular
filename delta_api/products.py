@@ -129,24 +129,24 @@ class ProductAPI:
                     if settlement_time:
                         # settlement_time is in ISO 8601 format like "2025-10-24T04:00:00Z"
                         # Convert to datetime object
-                    try:
-                        if isinstance(settlement_time, str):
-                            # Parse ISO 8601 format
-                            dt = datetime.fromisoformat(settlement_time.replace('Z', '+00:00'))
-                            timestamp = int(dt.timestamp())
-                        else:
-                            # Already a timestamp
-                            timestamp = int(settlement_time)
-                            dt = datetime.fromtimestamp(timestamp)
+                        try:
+                            if isinstance(settlement_time, str):
+                                # Parse ISO 8601 format
+                                dt = datetime.fromisoformat(settlement_time.replace('Z', '+00:00'))
+                                timestamp = int(dt.timestamp())
+                            else:
+                                # Already a timestamp
+                                timestamp = int(settlement_time)
+                                dt = datetime.fromtimestamp(timestamp)
                         
-                        if timestamp not in expiries:
-                            expiries[timestamp] = {
-                                'timestamp': timestamp,
-                                'datetime': dt
+                            if timestamp not in expiries:
+                                expiries[timestamp] = {
+                                    'timestamp': timestamp,
+                                    'datetime': dt
                             }
-                    except (ValueError, TypeError) as e:
-                        logger.warning(f"Failed to parse settlement_time: {settlement_time}, error: {e}")
-                        continue
+                        except (ValueError, TypeError) as e:
+                            logger.warning(f"Failed to parse settlement_time: {settlement_time}, error: {e}")
+                            continue
                         
             # Sort by timestamp (ascending)
             sorted_expiries = sorted(expiries.values(), key=lambda x: x['timestamp'])
