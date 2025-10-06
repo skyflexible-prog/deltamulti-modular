@@ -110,7 +110,7 @@ def format_position(position: Dict[str, Any]) -> str:
     size = position.get('size', 0)
     entry_price = position.get('entry_price', 0)
     mark_price = position.get('mark_price', 0)
-    pnl = position.get('unrealized_pnl', 0)
+    pnl = position.get('unrealized_profit_loss', 0)
     
     side = "LONG" if size > 0 else "SHORT"
     
