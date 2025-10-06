@@ -1,72 +1,77 @@
-"""Positions API operations."""
+"""Position management API."""
 import logging
 from typing import Dict, Any, List, Optional
+
+from delta_api.client import DeltaClient
 
 logger = logging.getLogger(__name__)
 
 class PositionAPI:
-    """Handles position operations."""
+    """Handles position-related API calls."""
     
-    def __init__(self, client):
-        self.client = client
-    
-    def get_positions(self, product_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    def __init__(self, client: DeltaClient):
         """
-        Get all open positions.
+        Initialize Position API.
         
         Args:
-            product_id: Optional product ID to filter positions
+            client: Delta Exchange API client
+        """
+        self.client = client
+    
+    def get_positions(self, product_id: Optional[int] = None, 
+                     underlying_asset: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get current positions.
+        
+        According to Delta Exchange API docs, you must provide either:
+        - product_id: Specific product ID
+        - underlying_asset_symbol: Like "BTC" or "ETH"
+        
+        Args:
+            product_id: Optional product ID to filter by
+            underlying_asset: Optional underlying asset symbol (BTC, ETH)
         
         Returns:
             List of position dictionaries
         """
         try:
-            # CRITICAL: Do NOT pass any query parameters to positions endpoint
-            # Delta Exchange positions API does not accept query parameters
-            response = self.client.get('/v2/positions')
+            # Build query parameters
+            params = {}
             
-            positions = []
+            if product_id:
+                params['product_id'] = product_id
+            elif underlying_asset:
+                params['underlying_asset_symbol'] = underlying_asset
+            else:
+                # If no filter provided, get all positions for BTC and ETH
+                # We'll call the API twice and combine results
+                btc_positions = self.get_positions(underlying_asset='BTC')
+                eth_positions = self.get_positions(underlying_asset='ETH')
+                return btc_positions + eth_positions
+            
+            response = self.client.get('/v2/positions', params=params)
+            
             if 'result' in response:
-                for position in response['result']:
-                    # Skip positions with zero size
-                    size = int(position.get('size', 0))
-                    if size == 0:
-                        continue
-                    
-                    # Filter by product_id if specified
-                    if product_id and position.get('product_id') != product_id:
-                        continue
-                    
-                    position_data = {
-                        'product_id': position.get('product_id'),
-                        'symbol': position.get('product', {}).get('symbol', 'Unknown'),
-                        'size': size,
-                        'entry_price': float(position.get('entry_price', 0)),
-                        'mark_price': float(position.get('mark_price', 0)),
-                        'liquidation_price': float(position.get('liquidation_price', 0)),
-                        'unrealized_pnl': float(position.get('unrealized_pnl', 0)),
-                        'realized_pnl': float(position.get('realized_pnl', 0)),
-                        'margin': float(position.get('margin', 0))
-                    }
-                    
-                    positions.append(position_data)
+                positions = response['result']
+                logger.info(f"Fetched {len(positions)} positions")
+                return positions
             
-            logger.info(f"Fetched {len(positions)} open positions")
-            return positions
+            logger.warning("No positions found in response")
+            return []
         
         except Exception as e:
-            logger.error(f"Failed to fetch positions: {e}")
+            logger.error(f"Failed to fetch positions: {e}", exc_info=True)
             raise
     
     def get_position_by_product(self, product_id: int) -> Optional[Dict[str, Any]]:
         """
-        Get specific position by product ID.
+        Get position for specific product.
         
         Args:
             product_id: Product ID
         
         Returns:
-            Position dictionary or None if not found
+            Position dictionary or None
         """
         try:
             positions = self.get_positions(product_id=product_id)
@@ -74,5 +79,30 @@ class PositionAPI:
         
         except Exception as e:
             logger.error(f"Failed to fetch position for product {product_id}: {e}")
+            return None
+    
+    def close_position(self, product_id: int, close_on_trigger: bool = False) -> Dict[str, Any]:
+        """
+        Close position for specific product.
+        
+        Args:
+            product_id: Product ID
+            close_on_trigger: Whether to close on trigger
+        
+        Returns:
+            Response dictionary
+        """
+        try:
+            data = {
+                'product_id': product_id,
+                'close_on_trigger': close_on_trigger
+            }
+            
+            response = self.client.post('/v2/positions/close_all', data=data)
+            logger.info(f"Closed position for product {product_id}")
+            return response
+        
+        except Exception as e:
+            logger.error(f"Failed to close position: {e}", exc_info=True)
             raise
-          
+            
