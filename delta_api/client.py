@@ -1,5 +1,6 @@
 """Core Delta Exchange API client with connection pooling."""
 import requests
+import json
 import time
 import logging
 from typing import Dict, Any, Optional
@@ -78,18 +79,18 @@ class DeltaClient:
         if query_params:
             query_string = "?" + "&".join([f"{k}={v}" for k, v in query_params.items()])
         
-        # Build payload for signature
+        # Serialize payload for signature - MUST use same format for both signature and request
         payload = ""
         if data:
-            import json
-            payload = json.dumps(data, separators=(',', ':'))
+            # Use compact JSON format with no spaces, sorted keys
+            payload = json.dumps(data, separators=(',', ':'), sort_keys=True)
         
         # Get authentication headers
         headers = self.auth.get_headers(method, path, query_string, payload)
 
-        # Add User-Agent if not present
-        if 'User-Agent' not in headers:
-            headers['User-Agent'] = 'DeltaTradingBot/1.0'
+        # Ensure Content-Type is set correctly for POST/PUT
+        if data:
+            headers['Content-Type'] = 'application/json'
         
         # Log request details (mask sensitive data)
         logger.info(f"{method} {path}{query_string}")
@@ -98,28 +99,28 @@ class DeltaClient:
             logger.debug(f"Payload: {payload[:200]}...")
         
         try:
-            # Don't pass params if None or empty
-            request_params = query_params if query_params else None
-          
+            # Build the request - use the EXACT payload string used for signature
             response = self.session.request(
                 method=method,
                 url=url,
                 headers=headers,
                 params=query_params,
-                json=data,
+                data=payload if data else None,  # Send pre-serialized payload, not json=data
                 timeout=settings.REQUEST_TIMEOUT
             )
             
             # Log response
             logger.info(f"Response: {response.status_code}")
 
-            # Log response body for debugging
+            # Parse response body
             try:
                 response_body = response.json()
                 if response.status_code >= 400:
                     logger.error(f"Error Response Body: {response_body}")
             except:
-                logger.error(f"Response Text: {response.text}")
+                response_body = {}
+                if response.status_code >= 400:
+                    logger.error(f"Response Text: {response.text}")
             
             # Raise exception for HTTP errors
             response.raise_for_status()
@@ -170,4 +171,4 @@ class DeltaClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()
-                       
+        
