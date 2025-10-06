@@ -127,8 +127,8 @@ class ProductAPI:
                 for product in response['result']:
                     settlement_time = product.get('settlement_time')
                     if settlement_time:
-                    # settlement_time is in ISO 8601 format like "2025-10-24T04:00:00Z"
-                    # Convert to datetime object
+                        # settlement_time is in ISO 8601 format like "2025-10-24T04:00:00Z"
+                        # Convert to datetime object
                     try:
                         if isinstance(settlement_time, str):
                             # Parse ISO 8601 format
