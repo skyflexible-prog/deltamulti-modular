@@ -295,14 +295,27 @@ class ProductAPI:
                     
                         contract_type = product.get('contract_type')
                         strike = float(product.get('strike_price', 0))
+                       
+                        # Extract prices correctly from product data
+                        # Delta Exchange returns mark_price, quotes for bid/ask
+                        mark_price = float(product.get('mark_price', 0))
+                    
+                        # Get bid/ask from quotes if available
+                        quotes = product.get('quotes', {})
+                        if isinstance(quotes, dict):
+                            best_bid = float(quotes.get('best_bid', 0))
+                            best_ask = float(quotes.get('best_ask', 0))
+                        else:
+                            best_bid = 0
+                            best_ask = 0
                     
                         option_data = {
                             'product_id': product.get('id'),
                             'symbol': product.get('symbol'),
                             'strike': strike,
-                            'mark_price': float(product.get('mark_price', 0)),
-                            'ask': float(product.get('spot_price', {}).get('ask', 0)) if isinstance(product.get('spot_price'), dict) else 0,
-                            'bid': float(product.get('spot_price', {}).get('bid', 0)) if isinstance(product.get('spot_price'), dict) else 0
+                            'mark_price': mark_price,
+                            'bid': best_bid,
+                            'ask': best_ask
                         }
                         
                         if contract_type == CONTRACT_TYPE_CALL:
