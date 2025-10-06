@@ -521,7 +521,7 @@ async def handle_multi_stoploss(update: Update, context: ContextTypes.DEFAULT_TY
         # Build position selection keyboard with toggle buttons
         keyboard = []
         for position in positions:
-            button_text = f"⬜ {position['symbol']} | Size: {abs(position['size'])}"
+            button_text = f"⬜ {position.get('product', {}).get('symbol', 'Unknown')} | Size: {abs(position['size'])}"
             callback_data = create_callback_data(
                 CALLBACK_MULTI_SL_TOGGLE,
                 position['product_id']
@@ -618,7 +618,7 @@ async def handle_multi_stoploss_toggle(update: Update, context: ContextTypes.DEF
         for position in positions:
             pid = position['product_id']
             checkbox = "✅" if pid in selected_positions else "⬜"
-            button_text = f"{checkbox} {position['symbol']} | Size: {abs(position['size'])}"
+            button_text = f"{checkbox} {position.get('product', {}).get('symbol', 'Unknown')} | Size: {abs(position['size'])}"
             callback_data_str = create_callback_data(CALLBACK_MULTI_SL_TOGGLE, pid)
             keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data_str)])
         
