@@ -202,12 +202,10 @@ def register_handlers(application: Application):
         handle_lot_selection,
         pattern=f"^{CALLBACK_SELECT_LOT}:"
     ))
-    # Add after handle_lot_selection handler
     application.add_handler(CallbackQueryHandler(
         handle_custom_lot_callback,
         pattern=f"^{CALLBACK_CUSTOM_LOT}$"
     ))
-
     application.add_handler(CallbackQueryHandler(
         handle_trade_direction,
         pattern=f"^{CALLBACK_TRADE_DIRECTION}:"
@@ -245,6 +243,20 @@ def register_handlers(application: Application):
         pattern=f"^{CALLBACK_CONFIRM_SL}$"
     ))
     
+    # Multi-strike stop-loss callbacks
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_stoploss,
+        pattern=f"^{CALLBACK_MULTI_STOPLOSS}$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_stoploss_toggle,
+        pattern=f"^{CALLBACK_MULTI_SL_TOGGLE}:"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_stoploss_confirmation,
+        pattern=f"^{CALLBACK_CONFIRM_MULTI_SL}$"
+    ))
+    
     # Target callbacks
     application.add_handler(CallbackQueryHandler(
         handle_set_target,
@@ -261,6 +273,20 @@ def register_handlers(application: Application):
     application.add_handler(CallbackQueryHandler(
         handle_target_confirmation,
         pattern=f"^{CALLBACK_CONFIRM_TARGET}$"
+    ))
+    
+    # Multi-strike target callbacks
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_target,
+        pattern=f"^{CALLBACK_MULTI_TARGET}$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_target_toggle,
+        pattern=f"^{CALLBACK_MULTI_TARGET_TOGGLE}:"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_target_confirmation,
+        pattern=f"^{CALLBACK_CONFIRM_MULTI_TARGET}$"
     ))
     
     # Orders callbacks
@@ -281,34 +307,6 @@ def register_handlers(application: Application):
     application.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND,
         handle_text_input
-    ))
-
-    # Multi-strike stop-loss callbacks
-    application.add_handler(CallbackQueryHandler(
-        handle_multi_stoploss,
-        pattern=f"^{CALLBACK_MULTI_STOPLOSS}$"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_multi_stoploss_toggle,
-        pattern=f"^{CALLBACK_MULTI_SL_TOGGLE}:"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_multi_stoploss_confirmation,
-        pattern=f"^{CALLBACK_CONFIRM_MULTI_SL}$"
-    ))
-
-    # Multi-strike target callbacks
-    application.add_handler(CallbackQueryHandler(
-        handle_multi_target,
-        pattern=f"^{CALLBACK_MULTI_TARGET}$"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_multi_target_toggle,
-        pattern=f"^{CALLBACK_MULTI_TARGET_TOGGLE}:"
-    ))
-    application.add_handler(CallbackQueryHandler(
-        handle_multi_target_confirmation,
-        pattern=f"^{CALLBACK_CONFIRM_MULTI_TARGET}$"
     ))
     
     # Error handler
