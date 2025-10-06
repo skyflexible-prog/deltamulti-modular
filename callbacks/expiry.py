@@ -6,6 +6,7 @@ from datetime import datetime
 
 from config.constants import (
     CALLBACK_SELECT_ASSET, CALLBACK_SELECT_EXPIRY, CALLBACK_MAIN_MENU,
+    CALLBACK_EXPIRY_SELECTION,  # Add this line
     ASSET_BTC, ASSET_ETH, EMOJI_CHART
 )
 from delta_api.client import DeltaClient
