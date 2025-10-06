@@ -142,49 +142,51 @@ def format_account_summary(summary: Dict[str, Any], account_name: str,
     
     return text
 
-def format_straddle_details(underlying: str, expiry_dt: datetime, spot_price: float,
-                           atm_strike: float, call_data: Dict, put_data: Dict,
-                           lot_size: int = 1) -> str:
+def format_straddle_details(asset: str, expiry_dt: datetime, spot_price: float,
+                           strike: float, call_data: Dict, put_data: Dict) -> str:
     """
-    Format straddle details for display.
+    Format ATM straddle details for display.
     
     Args:
-        underlying: Underlying asset (BTCUSD/ETHUSD)
+        asset: Underlying asset symbol (BTCUSD or ETHUSD)
         expiry_dt: Expiry datetime
         spot_price: Current spot price
-        atm_strike: ATM strike price
-        call_data: Call option data dictionary
-        put_data: Put option data dictionary
-        lot_size: Number of lots
+        strike: ATM strike price
+        call_data: Call option data dict with keys: product_id, symbol, strike, mark_price, bid, ask
+        put_data: Put option data dict with keys: product_id, symbol, strike, mark_price, bid, ask
     
     Returns:
         Formatted straddle details string
     """
+    # Get prices - use correct dictionary keys
+    call_mark = call_data.get('mark_price', 0)
+    put_mark = put_data.get('mark_price', 0)
+    call_bid = call_data.get('bid', 0)
+    call_ask = call_data.get('ask', 0)
+    put_bid = put_data.get('bid', 0)
+    put_ask = put_data.get('ask', 0)
+    
+    total_cost = call_mark + put_mark
+    
     text = f"{EMOJI_CHART} <b>ATM Straddle Details</b>\n\n"
-    text += f"<b>Underlying:</b> {underlying}\n"
+    text += f"<b>Underlying:</b> {asset}\n"
     text += f"<b>Expiry:</b> {expiry_dt.strftime('%d %b %Y %H:%M')}\n"
     text += f"<b>Spot Price:</b> {format_price(spot_price)}\n"
-    text += f"<b>ATM Strike:</b> {format_price(atm_strike)}\n\n"
+    text += f"<b>ATM Strike:</b> {format_price(strike)}\n\n"
     
-    text += f"<b>📞 Call Option (CE):</b>\n"
-    text += f"Symbol: {call_data.get('symbol')}\n"
-    text += f"Mark: {format_price(call_data.get('mark_price', 0))}\n"
-    text += f"Bid: {format_price(call_data.get('best_bid', 0))} | "
-    text += f"Ask: {format_price(call_data.get('best_ask', 0))}\n\n"
+    text += f"📞 <b>Call Option (CE):</b>\n"
+    text += f"Symbol: {call_data.get('symbol', 'N/A')}\n"
+    text += f"Mark: {format_price(call_mark)}\n"
+    text += f"Bid: {format_price(call_bid)} | Ask: {format_price(call_ask)}\n\n"
     
-    text += f"<b>📝 Put Option (PE):</b>\n"
-    text += f"Symbol: {put_data.get('symbol')}\n"
-    text += f"Mark: {format_price(put_data.get('mark_price', 0))}\n"
-    text += f"Bid: {format_price(put_data.get('best_bid', 0))} | "
-    text += f"Ask: {format_price(put_data.get('best_ask', 0))}\n\n"
-    
-    call_cost = call_data.get('mark_price', 0) * lot_size
-    put_cost = put_data.get('mark_price', 0) * lot_size
-    total_cost = call_cost + put_cost
+    text += f"📝 <b>Put Option (PE):</b>\n"
+    text += f"Symbol: {put_data.get('symbol', 'N/A')}\n"
+    text += f"Mark: {format_price(put_mark)}\n"
+    text += f"Bid: {format_price(put_bid)} | Ask: {format_price(put_ask)}\n\n"
     
     text += f"<b>Cost per Lot:</b>\n"
-    text += f"CE: {format_price(call_cost)} | PE: {format_price(put_cost)}\n"
+    text += f"CE: {format_price(call_mark)} | PE: {format_price(put_mark)}\n"
     text += f"<b>Total: {format_price(total_cost)}</b>"
     
     return text
-                            
+                               
