@@ -12,6 +12,7 @@ from .expiry import (
 )
 from .trade import (
     handle_lot_selection,
+    handle_custom_lot_callback,  # Add this
     handle_custom_lot_input,
     handle_trade_direction,
     handle_trade_confirmation
@@ -46,6 +47,7 @@ __all__ = [
     'handle_asset_selection',
     'handle_expiry_selected',
     'handle_lot_selection',
+    'handle_custom_lot_callback',
     'handle_custom_lot_input',
     'handle_trade_direction',
     'handle_trade_confirmation',
