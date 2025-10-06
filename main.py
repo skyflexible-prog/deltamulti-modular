@@ -41,7 +41,10 @@ from callbacks.expiry import (
     handle_expiry_selection, handle_asset_selection, handle_expiry_selected
 )
 from callbacks.trade import (
-    handle_lot_selection, handle_custom_lot_input, handle_trade_direction,
+    handle_lot_selection, 
+    handle_custom_lot_callback, 
+    handle_custom_lot_input, 
+    handle_trade_direction,
     handle_trade_confirmation
 )
 from callbacks.position import handle_show_positions
