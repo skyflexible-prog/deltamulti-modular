@@ -25,7 +25,9 @@ from config.constants import (
     CALLBACK_TRADE_DIRECTION, CALLBACK_CONFIRM_TRADE, CALLBACK_CANCEL_TRADE,
     CALLBACK_SL_POSITION, CALLBACK_SL_METHOD, CALLBACK_CONFIRM_SL,
     CALLBACK_TARGET_POSITION, CALLBACK_TARGET_METHOD, CALLBACK_CONFIRM_TARGET,
-    CALLBACK_CANCEL_ORDER, CALLBACK_CANCEL_ALL_ORDERS
+    CALLBACK_CANCEL_ORDER, CALLBACK_CANCEL_ALL_ORDERS,
+    CALLBACK_MULTI_SL_TOGGLE, CALLBACK_CONFIRM_MULTI_SL,
+    CALLBACK_MULTI_TARGET_TOGGLE, CALLBACK_CONFIRM_MULTI_TARGET
 )
 
 # Import handlers
@@ -41,25 +43,39 @@ from callbacks.expiry import (
     handle_expiry_selection, handle_asset_selection, handle_expiry_selected
 )
 from callbacks.trade import (
-    handle_lot_selection, 
-    handle_custom_lot_callback, 
-    handle_custom_lot_input, 
+    handle_lot_selection,
+    handle_custom_lot_callback,
+    handle_custom_lot_input,
     handle_trade_direction,
     handle_trade_confirmation
 )
 from callbacks.position import handle_show_positions
 from callbacks.stoploss import (
-    handle_set_stoploss, handle_stoploss_position_selection,
-    handle_stoploss_method_selection, handle_stoploss_input,
-    handle_stoploss_confirmation
+    handle_set_stoploss,
+    handle_stoploss_position_selection,
+    handle_stoploss_method_selection,
+    handle_stoploss_input,
+    handle_stoploss_confirmation,
+    handle_multi_stoploss,
+    handle_multi_stoploss_toggle,
+    handle_multi_stoploss_input,
+    handle_multi_stoploss_confirmation
 )
 from callbacks.target import (
-    handle_set_target, handle_target_position_selection,
-    handle_target_method_selection, handle_target_input,
-    handle_target_confirmation
+    handle_set_target,
+    handle_target_position_selection,
+    handle_target_method_selection,
+    handle_target_input,
+    handle_target_confirmation,
+    handle_multi_target,
+    handle_multi_target_toggle,
+    handle_multi_target_input,
+    handle_multi_target_confirmation
 )
 from callbacks.orders import (
-    handle_show_orders, handle_cancel_order, handle_cancel_all_orders
+    handle_show_orders,
+    handle_cancel_order,
+    handle_cancel_all_orders
 )
 
 # Configure logging
