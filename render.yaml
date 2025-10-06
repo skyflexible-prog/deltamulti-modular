@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: telegram-delta-bot
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.4
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: WEBHOOK_URL
+        sync: false
+      - key: ACCOUNT_1_API_KEY
+        sync: false
+      - key: ACCOUNT_1_API_SECRET
+        sync: false
+      - key: ACCOUNT_1_NAME
+        sync: false
+      - key: ACCOUNT_1_DESCRIPTION
+        sync: false
+      - key: ACCOUNT_2_API_KEY
+        sync: false
+      - key: ACCOUNT_2_API_SECRET
+        sync: false
+      - key: ACCOUNT_2_NAME
+        sync: false
+      - key: ACCOUNT_2_DESCRIPTION
+        sync: false
+      - key: ACCOUNT_3_API_KEY
+        sync: false
+      - key: ACCOUNT_3_API_SECRET
+        sync: false
+      - key: ACCOUNT_3_NAME
+        sync: false
+      - key: ACCOUNT_3_DESCRIPTION
+        sync: false
+      - key: ACCOUNT_4_API_KEY
+        sync: false
+      - key: ACCOUNT_4_API_SECRET
+        sync: false
+      - key: ACCOUNT_4_NAME
+        sync: false
+      - key: ACCOUNT_4_DESCRIPTION
+        sync: false
+      - key: ACCOUNT_5_API_KEY
+        sync: false
+      - key: ACCOUNT_5_API_SECRET
+        sync: false
+      - key: ACCOUNT_5_NAME
+        sync: false
+      - key: ACCOUNT_5_DESCRIPTION
+        sync: false
+        
