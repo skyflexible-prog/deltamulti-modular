@@ -263,6 +263,34 @@ def register_handlers(application: Application):
         filters.TEXT & ~filters.COMMAND,
         handle_text_input
     ))
+
+    # Multi-strike stop-loss callbacks
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_stoploss,
+        pattern=f"^{CALLBACK_MULTI_STOPLOSS}$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_stoploss_toggle,
+        pattern=f"^{CALLBACK_MULTI_SL_TOGGLE}:"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_stoploss_confirmation,
+        pattern=f"^{CALLBACK_CONFIRM_MULTI_SL}$"
+    ))
+
+    # Multi-strike target callbacks
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_target,
+        pattern=f"^{CALLBACK_MULTI_TARGET}$"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_target_toggle,
+        pattern=f"^{CALLBACK_MULTI_TARGET_TOGGLE}:"
+    ))
+    application.add_handler(CallbackQueryHandler(
+        handle_multi_target_confirmation,
+        pattern=f"^{CALLBACK_CONFIRM_MULTI_TARGET}$"
+    ))
     
     # Error handler
     application.add_error_handler(error_handler)
