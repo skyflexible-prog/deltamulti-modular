@@ -489,3 +489,376 @@ async def handle_custom_lot_callback(update: Update, context: ContextTypes.DEFAU
         parse_mode='HTML'
     )
     
+"""Add these functions to callbacks/target.py for multi-strike targets."""
+
+async def handle_multi_target(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle multi-strike target callback - display positions for multiple selection.
+    
+    Args:
+        update: Telegram update object
+        context: Callback context
+    """
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    user_context = context_manager.get_context(user_id)
+    
+    if not user_context.account_credentials:
+        await query.edit_message_text(
+            "❌ No account selected. Please use /start to select an account.",
+            parse_mode='HTML'
+        )
+        return
+    
+    # Clear previous data
+    user_context.conversation_state = None
+    user_context.temp_data = {'selected_positions': []}
+    
+    # Show loading message
+    await query.edit_message_text(
+        "⏳ Fetching open positions...",
+        parse_mode='HTML'
+    )
+    
+    try:
+        # Fetch positions
+        with DeltaClient(
+            user_context.account_credentials['api_key'],
+            user_context.account_credentials['api_secret']
+        ) as client:
+            position_api = PositionAPI(client)
+            positions = position_api.get_positions()
+        
+        if not positions:
+            keyboard = [[InlineKeyboardButton("🔙 Back to Main Menu", callback_data=CALLBACK_MAIN_MENU)]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.edit_message_text(
+                f"{EMOJI_TARGET} <b>Multi-Strike Targets</b>\n\n"
+                "You have no active positions.",
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+            return
+        
+        # Store positions in temp data
+        user_context.temp_data['all_positions'] = positions
+        
+        # Build position selection keyboard with toggle buttons
+        keyboard = []
+        for position in positions:
+            button_text = f"⬜ {position['symbol']} | Size: {abs(position['size'])}"
+            callback_data = create_callback_data(
+                CALLBACK_MULTI_TARGET_TOGGLE,
+                position['product_id']
+            )
+            keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data)])
+        
+        # Add confirm and cancel buttons
+        keyboard.append([InlineKeyboardButton(
+            "✅ Confirm Selection",
+            callback_data=create_callback_data(CALLBACK_MULTI_TARGET_TOGGLE, "confirm")
+        )])
+        keyboard.append([InlineKeyboardButton("🔙 Back to Main Menu", callback_data=CALLBACK_MAIN_MENU)])
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(
+            f"{EMOJI_TARGET} <b>Multi-Strike Targets</b>\n\n"
+            f"Select positions to set targets (tap to toggle):\n"
+            f"⬜ = Not selected | ✅ = Selected\n\n"
+            f"<i>Click 'Confirm Selection' when done.</i>",
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
+    
+    except Exception as e:
+        logger.error(f"Error fetching positions for multi targets: {e}", exc_info=True)
+        
+        keyboard = [[InlineKeyboardButton("🔙 Back to Main Menu", callback_data=CALLBACK_MAIN_MENU)]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(
+            f"❌ Failed to fetch positions.\nError: {str(e)}",
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
+
+async def handle_multi_target_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle position toggle for multi-strike targets.
+    
+    Args:
+        update: Telegram update object
+        context: Callback context
+    """
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    user_context = context_manager.get_context(user_id)
+    callback_data = parse_callback_data(query.data)
+    
+    try:
+        action = callback_data['params'][0]
+        
+        if action == "confirm":
+            # User confirmed selection
+            selected_positions = user_context.temp_data.get('selected_positions', [])
+            
+            if not selected_positions:
+                await query.answer("⚠️ Please select at least one position", show_alert=True)
+                return
+            
+            # Ask for trigger percentage
+            user_context.conversation_state = STATE_AWAITING_MULTI_TARGET_TRIGGER
+            
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data=CALLBACK_MAIN_MENU)]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.edit_message_text(
+                f"{EMOJI_TARGET} <b>Multi-Strike Targets</b>\n\n"
+                f"<b>Selected Positions:</b> {len(selected_positions)}\n\n"
+                f"Enter trigger price percentage from entry:\n"
+                f"<i>Example: 10 (for 10% target)</i>",
+                reply_markup=reply_markup,
+                parse_mode='HTML'
+            )
+            return
+        
+        # Toggle position selection
+        product_id = int(action)
+        selected_positions = user_context.temp_data.get('selected_positions', [])
+        
+        if product_id in selected_positions:
+            selected_positions.remove(product_id)
+        else:
+            selected_positions.append(product_id)
+        
+        user_context.temp_data['selected_positions'] = selected_positions
+        
+        # Rebuild keyboard with updated selections
+        positions = user_context.temp_data['all_positions']
+        keyboard = []
+        
+        for position in positions:
+            pid = position['product_id']
+            checkbox = "✅" if pid in selected_positions else "⬜"
+            button_text = f"{checkbox} {position['symbol']} | Size: {abs(position['size'])}"
+            callback_data_str = create_callback_data(CALLBACK_MULTI_TARGET_TOGGLE, pid)
+            keyboard.append([InlineKeyboardButton(button_text, callback_data=callback_data_str)])
+        
+        keyboard.append([InlineKeyboardButton(
+            "✅ Confirm Selection",
+            callback_data=create_callback_data(CALLBACK_MULTI_TARGET_TOGGLE, "confirm")
+        )])
+        keyboard.append([InlineKeyboardButton("🔙 Back to Main Menu", callback_data=CALLBACK_MAIN_MENU)])
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(
+            f"{EMOJI_TARGET} <b>Multi-Strike Targets</b>\n\n"
+            f"Select positions to set targets (tap to toggle):\n"
+            f"⬜ = Not selected | ✅ = Selected\n\n"
+            f"<b>Selected:</b> {len(selected_positions)}\n\n"
+            f"<i>Click 'Confirm Selection' when done.</i>",
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
+    
+    except Exception as e:
+        logger.error(f"Error in multi target toggle: {e}", exc_info=True)
+        await query.answer("❌ An error occurred", show_alert=True)
+
+async def handle_multi_target_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle multi-strike target percentage input.
+    
+    Args:
+        update: Telegram update object
+        context: Callback context
+    """
+    user_id = update.effective_user.id
+    user_context = context_manager.get_context(user_id)
+    
+    state = user_context.conversation_state
+    
+    if state not in [STATE_AWAITING_MULTI_TARGET_TRIGGER, STATE_AWAITING_MULTI_TARGET_LIMIT]:
+        return
+    
+    user_input = update.message.text.strip()
+    
+    try:
+        is_valid, value, error_msg = validate_percentage(user_input)
+        
+        if not is_valid:
+            await update.message.reply_text(
+                f"❌ {error_msg}\n\nPlease try again:",
+                parse_mode='HTML'
+            )
+            return
+        
+        if state == STATE_AWAITING_MULTI_TARGET_TRIGGER:
+            user_context.temp_data['multi_target_trigger_pct'] = value
+            user_context.conversation_state = STATE_AWAITING_MULTI_TARGET_LIMIT
+            
+            await update.message.reply_text(
+                f"{EMOJI_TARGET} <b>Multi-Strike Targets</b>\n\n"
+                "Enter limit price percentage from entry:\n"
+                "<i>Example: 9.5</i>",
+                parse_mode='HTML'
+            )
+        
+        elif state == STATE_AWAITING_MULTI_TARGET_LIMIT:
+            user_context.temp_data['multi_target_limit_pct'] = value
+            user_context.conversation_state = None
+            
+            # Show confirmation
+            await _show_multi_target_confirmation(update, user_context)
+    
+    except Exception as e:
+        logger.error(f"Error processing multi target input: {e}", exc_info=True)
+        await update.message.reply_text(
+            "❌ An error occurred. Please try again or use /start.",
+            parse_mode='HTML'
+        )
+
+async def handle_multi_target_confirmation(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle multi-strike target confirmation - place orders for all selected positions.
+    
+    Args:
+        update: Telegram update object
+        context: Callback context
+    """
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    user_context = context_manager.get_context(user_id)
+    
+    try:
+        selected_product_ids = user_context.temp_data['selected_positions']
+        all_positions = user_context.temp_data['all_positions']
+        trigger_pct = user_context.temp_data['multi_target_trigger_pct']
+        limit_pct = user_context.temp_data['multi_target_limit_pct']
+        
+        # Filter selected positions
+        selected_positions = [p for p in all_positions if p['product_id'] in selected_product_ids]
+        
+        # Show executing message
+        await query.edit_message_text(
+            f"{EMOJI_TARGET} <b>Placing Take-Profit Orders...</b>\n\n"
+            f"Processing {len(selected_positions)} positions...",
+            parse_mode='HTML'
+        )
+        
+        # Prepare orders
+        orders_data = []
+        for position in selected_positions:
+            entry_price = position['entry_price']
+            size = position['size']
+            is_long = size > 0
+            
+            stop_price = calculate_target_price_from_percentage(entry_price, trigger_pct, is_long)
+            limit_price = calculate_target_price_from_percentage(entry_price, limit_pct, is_long)
+            
+            order_side = SIDE_SELL if is_long else SIDE_BUY
+            
+            orders_data.append({
+                'product_id': position['product_id'],
+                'side': order_side,
+                'size': abs(size),
+                'stop_price': stop_price,
+                'limit_price': limit_price
+            })
+        
+        # Place orders
+        with DeltaClient(
+            user_context.account_credentials['api_key'],
+            user_context.account_credentials['api_secret']
+        ) as client:
+            order_api = OrderAPI(client)
+            results = order_api.place_batch_stop_orders(orders_data, order_type='take_profit')
+        
+        # Format results
+        successful = sum(1 for r in results if r['success'])
+        failed = len(results) - successful
+        
+        result_text = (
+            f"{EMOJI_CHECK} <b>Multi-Strike Targets Complete</b>\n\n"
+            f"<b>Total Positions:</b> {len(results)}\n"
+            f"<b>Successful:</b> {successful} ✅\n"
+            f"<b>Failed:</b> {failed} ❌\n\n"
+        )
+        
+        if successful > 0:
+            result_text += "<b>Successful Orders:</b>\n"
+            for r in results:
+                if r['success']:
+                    result_text += f"• Product {r['product_id']}: Order {r['order']['id']}\n"
+        
+        if failed > 0:
+            result_text += "\n<b>Failed Orders:</b>\n"
+            for r in results:
+                if not r['success']:
+                    result_text += f"• Product {r['product_id']}: {r['error']}\n"
+        
+        keyboard = [[InlineKeyboardButton("🔙 Back to Main Menu", callback_data=CALLBACK_MAIN_MENU)]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(
+            result_text,
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
+        
+        # Clear temp data
+        user_context.temp_data = {}
+        
+        logger.info(f"User {user_id} placed multi-strike targets: {successful}/{len(results)} successful")
+    
+    except Exception as e:
+        logger.error(f"Error placing multi target orders: {e}", exc_info=True)
+        
+        keyboard = [[InlineKeyboardButton("🔙 Back to Main Menu", callback_data=CALLBACK_MAIN_MENU)]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(
+            f"{EMOJI_CROSS} <b>Failed to Place Multi-Strike Targets</b>\n\n"
+            f"Error: {str(e)}",
+            reply_markup=reply_markup,
+            parse_mode='HTML'
+        )
+        
+        user_context.temp_data = {}
+
+async def _show_multi_target_confirmation(update, user_context):
+    """Show multi-strike target confirmation."""
+    trigger_pct = user_context.temp_data['multi_target_trigger_pct']
+    limit_pct = user_context.temp_data['multi_target_limit_pct']
+    selected_count = len(user_context.temp_data['selected_positions'])
+    
+    confirmation_text = (
+        f"{EMOJI_TARGET} <b>Confirm Multi-Strike Targets</b>\n\n"
+        f"<b>Positions Selected:</b> {selected_count}\n"
+        f"<b>Trigger %:</b> {format_percentage(trigger_pct)}\n"
+        f"<b>Limit %:</b> {format_percentage(limit_pct)}\n\n"
+        f"This will place take-profit orders for all selected positions.\n\n"
+        f"Confirm to proceed?"
+    )
+    
+    keyboard = [
+        [InlineKeyboardButton(f"{EMOJI_CHECK} Confirm", callback_data=CALLBACK_CONFIRM_MULTI_TARGET)],
+        [InlineKeyboardButton(f"{EMOJI_CROSS} Cancel", callback_data=CALLBACK_MAIN_MENU)]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(
+        confirmation_text,
+        reply_markup=reply_markup,
+        parse_mode='HTML'
+    )
+    
