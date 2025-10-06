@@ -21,10 +21,9 @@ class PositionAPI:
             List of position dictionaries
         """
         try:
-            # Note: Do NOT use underlying_asset_symbol parameter (not supported)
-            params = {}
-            
-            response = self.client.get('/v2/positions', params=params)
+            # CRITICAL: Do NOT pass any query parameters to positions endpoint
+            # Delta Exchange positions API does not accept query parameters
+            response = self.client.get('/v2/positions')
             
             positions = []
             if 'result' in response:
