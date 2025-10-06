@@ -198,7 +198,7 @@ async def handle_expiry_selected(update: Update, context: ContextTypes.DEFAULT_T
             atm_options = product_api.find_atm_options(asset, expiry_timestamp, spot_price)
         
         # Store options data
-        user_context.selected_strike = atm_options['atm_strike']
+        user_context.selected_strike = atm_options['strike']
         user_context.call_product_id = atm_options['call']['product_id']
         user_context.put_product_id = atm_options['put']['product_id']
         
@@ -208,7 +208,7 @@ async def handle_expiry_selected(update: Update, context: ContextTypes.DEFAULT_T
             asset,
             expiry_dt,
             spot_price,
-            atm_options['atm_strike'],
+            atm_options['strike'],
             atm_options['call'],
             atm_options['put']
         )
