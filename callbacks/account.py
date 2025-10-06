@@ -49,11 +49,18 @@ async def handle_account_selection(update: Update, context: ContextTypes.DEFAULT
             )
             return
         
-        # Store account in user context
+        # Store account in user context WITH name and description
         user_context = context_manager.get_context(user_id)
-        user_context.set_account(account_index, account.api_key, account.api_secret)
+        user_context.set_account(
+            account_index, 
+            account.api_key, 
+            account.api_secret,
+            account.name,
+            account.description
+        )
         
-        logger.info(f"User {user_id} selected account: {account.name}")
+        logger.info(f"User {user_id} selected account: {account.name} (index={account_index})")
+        logger.debug(f"Account credentials stored: api_key={account.api_key[:10]}...")
         
         # Fetch account balance
         loading_message = await query.edit_message_text(
@@ -83,6 +90,8 @@ async def handle_account_selection(update: Update, context: ContextTypes.DEFAULT
                 reply_markup=reply_markup,
                 parse_mode='HTML'
             )
+
+            logger.info(f"User {user_id} successfully loaded account {account.name}")
         
         except Exception as e:
             logger.error(f"Failed to fetch account details: {e}", exc_info=True)
