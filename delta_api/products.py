@@ -100,6 +100,28 @@ class ProductAPI:
             logger.error(f"Failed to fetch tickers: {e}")
             raise
     
+    def get_ticker(self, symbol: str) -> Dict[str, Any]:
+        """
+        Get ticker data for specific product symbol.
+    
+        Args:
+            symbol: Product symbol (e.g., "C-BTC-123600-061025")
+    
+        Returns:
+            Ticker data dictionary
+        """
+        try:
+            response = self.client.get(f'/v2/tickers/{symbol}')
+        
+            if 'result' in response:
+                return response['result']
+        
+            return {}
+    
+        except Exception as e:
+            logger.error(f"Failed to fetch ticker for {symbol}: {e}")
+            return {}
+    
     def get_available_expiries(self, underlying_asset: str) -> List[Dict[str, Any]]:
         """
         Get all available expiry dates for options on underlying asset.
