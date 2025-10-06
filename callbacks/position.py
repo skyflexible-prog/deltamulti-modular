@@ -6,7 +6,8 @@ from telegram.ext import ContextTypes
 from config.constants import CALLBACK_MAIN_MENU, EMOJI_CHART
 from delta_api.client import DeltaClient
 from delta_api.positions import PositionAPI
-from utils.formatters import format_position
+from delta_api.products import ProductAPI  # ADD THIS LINE
+from utils.formatters import format_position, format_pnl  # ADD format_pnl HERE
 from utils.context_manager import UserContextManager
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,24 @@ async def handle_show_positions(update: Update, context: ContextTypes.DEFAULT_TY
             user_context.account_credentials['api_secret']
         ) as client:
             position_api = PositionAPI(client)
+            product_api = ProductAPI(client)  # ADD THIS LINE
+            
             positions = position_api.get_positions()
+            
+            # ADD THESE LINES (lines 54-67):
+            if positions:
+                # Fetch all tickers to get mark prices
+                all_tickers = product_api.get_tickers()
+                ticker_map = {t['symbol']: t for t in all_tickers}
+                
+                # Enrich positions with mark_price
+                for position in positions:
+                    product = position.get('product', {})
+                    symbol = product.get('symbol', 'Unknown')
+                    ticker = ticker_map.get(symbol, {})
+                    
+                    # Add mark_price from ticker
+                    position['mark_price'] = float(ticker.get('mark_price', 0))
         
         if not positions:
             keyboard = [[InlineKeyboardButton("🔙 Back to Main Menu", callback_data=CALLBACK_MAIN_MENU)]]
@@ -71,7 +89,6 @@ async def handle_show_positions(update: Update, context: ContextTypes.DEFAULT_TY
         
         # Add summary
         total_pnl = sum(float(p.get('unrealized_profit_loss', 0)) for p in positions)
-        from utils.formatters import format_pnl
         positions_text += f"<b>Total Unrealized PnL:</b> {format_pnl(total_pnl)}"
         
         keyboard = [[InlineKeyboardButton("🔙 Back to Main Menu", callback_data=CALLBACK_MAIN_MENU)]]
@@ -94,4 +111,4 @@ async def handle_show_positions(update: Update, context: ContextTypes.DEFAULT_TY
             reply_markup=reply_markup,
             parse_mode='HTML'
         )
-      
+        
