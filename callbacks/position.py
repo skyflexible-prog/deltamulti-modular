@@ -56,7 +56,10 @@ async def handle_show_positions(update: Update, context: ContextTypes.DEFAULT_TY
             if positions:
                 # Fetch all tickers to get mark prices
                 all_tickers = product_api.get_tickers()
-                ticker_map = {t['symbol']: t for t in all_tickers}
+                # all_tickers is {'result': [...list of tickers...]}
+                tickers_list = all_tickers if isinstance(all_tickers, list) else all_tickers.get('result', [])
+                ticker_map = {t['symbol']: t for t in tickers_list}
+
                 
                 # Enrich positions with mark_price
                 for position in positions:
