@@ -459,3 +459,33 @@ async def _show_target_confirmation(update, user_context):
         parse_mode='HTML'
       )
   
+# Add this function to callbacks/trade.py
+async def handle_custom_lot_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handle custom lot callback - prompt user to enter lot size.
+    
+    Args:
+        update: Telegram update object
+        context: Callback context
+    """
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    user_context = context_manager.get_context(user_id)
+    
+    # Set conversation state
+    user_context.conversation_state = STATE_AWAITING_CUSTOM_LOT
+    
+    # Build cancel keyboard
+    keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data=CALLBACK_MAIN_MENU)]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        "✏️ <b>Enter Custom Lot Size:</b>\n\n"
+        "Please type the number of lots you want to trade.\n"
+        "<i>Example: 3</i>",
+        reply_markup=reply_markup,
+        parse_mode='HTML'
+    )
+    
