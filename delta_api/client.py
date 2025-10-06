@@ -94,6 +94,9 @@ class DeltaClient:
             logger.debug(f"Payload: {payload[:200]}...")
         
         try:
+            # Don't pass params if None or empty
+            request_params = query_params if query_params else None
+          
             response = self.session.request(
                 method=method,
                 url=url,
