@@ -39,7 +39,7 @@ async def handle_set_target(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     user_context = context_manager.get_context(user_id)
     
-    if not user_context.account_credentials:
+    if not user_context.has_account():
         await query.edit_message_text(
             "❌ No account selected. Please use /start to select an account.",
             parse_mode='HTML'
@@ -505,7 +505,7 @@ async def handle_multi_target(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_id = update.effective_user.id
     user_context = context_manager.get_context(user_id)
     
-    if not user_context.account_credentials:
+    if not user_context.has_account():
         await query.edit_message_text(
             "❌ No account selected. Please use /start to select an account.",
             parse_mode='HTML'
