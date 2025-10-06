@@ -70,7 +70,7 @@ async def handle_show_positions(update: Update, context: ContextTypes.DEFAULT_TY
             positions_text += "\n\n"
         
         # Add summary
-        total_pnl = sum(p['unrealized_pnl'] for p in positions)
+        total_pnl = sum(float(p.get('unrealized_profit_loss', 0)) for p in positions)
         from utils.formatters import format_pnl
         positions_text += f"<b>Total Unrealized PnL:</b> {format_pnl(total_pnl)}"
         
