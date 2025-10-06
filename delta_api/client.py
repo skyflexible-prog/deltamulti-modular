@@ -89,7 +89,7 @@ class DeltaClient:
 
         # Add User-Agent if not present
         if 'User-Agent' not in headers:
-        headers['User-Agent'] = 'DeltaTradingBot/1.0'
+            headers['User-Agent'] = 'DeltaTradingBot/1.0'
         
         # Log request details (mask sensitive data)
         logger.info(f"{method} {path}{query_string}")
