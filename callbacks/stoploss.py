@@ -82,7 +82,7 @@ async def handle_set_stoploss(update: Update, context: ContextTypes.DEFAULT_TYPE
         # Build position selection keyboard
         keyboard = []
         for position in positions:
-            button_text = f"{position['symbol']} | Size: {abs(position['size'])}"
+            button_text = f"{position.get('product', {}).get('symbol', 'Unknown')} | Size: {abs(position['size'])}"
             callback_data = create_callback_data(
                 CALLBACK_SL_POSITION,
                 position['product_id'],
