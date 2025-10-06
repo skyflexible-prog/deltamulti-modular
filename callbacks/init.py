@@ -23,14 +23,22 @@ from .stoploss import (
     handle_stoploss_position_selection,
     handle_stoploss_method_selection,
     handle_stoploss_input,
-    handle_stoploss_confirmation
+    handle_stoploss_confirmation,
+    handle_multi_stoploss,  # Add
+    handle_multi_stoploss_toggle,  # Add
+    handle_multi_stoploss_input,  # Add
+    handle_multi_stoploss_confirmation  # Add
 )
 from .target import (
     handle_set_target,
     handle_target_position_selection,
     handle_target_method_selection,
     handle_target_input,
-    handle_target_confirmation
+    handle_target_confirmation,
+    handle_multi_target,  # Add
+    handle_multi_target_toggle,  # Add
+    handle_multi_target_input,  # Add
+    handle_multi_target_confirmation  # Add
 )
 from .orders import (
     handle_show_orders,
@@ -64,5 +72,13 @@ __all__ = [
     'handle_target_confirmation',
     'handle_show_orders',
     'handle_cancel_order',
-    'handle_cancel_all_orders'
+    'handle_cancel_all_orders',
+    'handle_multi_stoploss',
+    'handle_multi_stoploss_toggle',
+    'handle_multi_stoploss_input',
+    'handle_multi_stoploss_confirmation',
+    'handle_multi_target',
+    'handle_multi_target_toggle',
+    'handle_multi_target_input',
+    'handle_multi_target_confirmation'
 ]
