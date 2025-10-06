@@ -86,6 +86,10 @@ class DeltaClient:
         
         # Get authentication headers
         headers = self.auth.get_headers(method, path, query_string, payload)
+
+        # Add User-Agent if not present
+        if 'User-Agent' not in headers:
+        headers['User-Agent'] = 'DeltaTradingBot/1.0'
         
         # Log request details (mask sensitive data)
         logger.info(f"{method} {path}{query_string}")
@@ -108,15 +112,27 @@ class DeltaClient:
             
             # Log response
             logger.info(f"Response: {response.status_code}")
+
+            # Log response body for debugging
+            try:
+                response_body = response.json()
+                if response.status_code >= 400:
+                    logger.error(f"Error Response Body: {response_body}")
+            except:
+                logger.error(f"Response Text: {response.text}")
             
             # Raise exception for HTTP errors
             response.raise_for_status()
             
-            return response.json()
+            return response_body
         
         except requests.exceptions.HTTPError as e:
             logger.error(f"HTTP Error: {e}")
-            logger.error(f"Response: {e.response.text if e.response else 'No response'}")
+            try:
+                error_details = e.response.json()
+                logger.error(f"Error Details: {error_details}")
+            except:
+                logger.error(f"Response: {e.response.text if e.response else 'No response'}")
             raise
         except requests.exceptions.RequestException as e:
             logger.error(f"Request Exception: {e}")
