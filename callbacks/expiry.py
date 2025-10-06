@@ -32,12 +32,18 @@ async def handle_expiry_selection(update: Update, context: ContextTypes.DEFAULT_
     user_id = update.effective_user.id
     user_context = context_manager.get_context(user_id)
     
-    if not user_context.account_credentials:
+    # Better check for account
+    if not user_context.has_account():
+        logger.warning(f"User {user_id} tried to access expiry selection without account")
+        logger.debug(f"Context state: account_credentials={user_context.account_credentials}")
+        
         await query.edit_message_text(
             "❌ No account selected. Please use /start to select an account.",
             parse_mode='HTML'
         )
         return
+
+    logger.info(f"User {user_id} accessing expiry selection with account {user_context.account_name}")
     
     # Clear previous trade data
     user_context.clear_trade_data()
